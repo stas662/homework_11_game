@@ -52,6 +52,7 @@ $(document).ready(function startGame() {
     return `${dateNow.getHours()}:${dateNow.getMinutes()}:${dateNow.getSeconds()}.${dateNow.getMilliseconds()}`;
   }
 
+let arrayBall = []
 let arrayKey = [];
 let win = 0;
 
@@ -68,7 +69,8 @@ let win = 0;
     arrayKey.push(this.id)
 
     this.createView = function () {
-      let result = document.createElement('div')
+      let result = document.createElement('div');
+      arrayBall[this.id] = result;
       result.style.cssText = `
       display: inline-block;
       position: absolute;
@@ -80,9 +82,9 @@ let win = 0;
       height: ${this.diametr}px;
       background: ${this.color}`;
       //result.innerText = this.id;
-      document.documentElement.append(result);
+      document.documentElement.append(arrayBall[this.id]);
 
-      return result;
+      return arrayBall[this.id];
     }
 
     this.div = this.createView();
@@ -90,6 +92,7 @@ let win = 0;
     $(this.div).click(function() {
       this.remove(); 
       win = win + 1;
+
       if (win === arrayKey.length) {
         points = points + 1000 * win;
         lvl = lvl + 1;
@@ -101,6 +104,7 @@ let win = 0;
           let newGame = confirm('Ссыграть ещё раз?');
           if (newGame) {
             lvl = 1;
+            proceedGame();
             startGame();
           }
         } else {
@@ -108,7 +112,7 @@ let win = 0;
           for (let i = 0; i < arrayCartridges.length; i++) {
             $(arrayCartridges[i]).remove();
           }
-
+          proceedGame();
           startGame();
         }
       }
@@ -273,7 +277,7 @@ for (let i = 0; i < arrayKey.length; i++) {
       if (ball.x > wall.x 
         && ball.x < wall.x + wall.width 
         && ball.y === wall.y + wall.height
-        && numberOfCollisions < 3
+        && numberOfCollisions < 2
         ) {
           ball.invertDirectionY();
           for (let i = 0; i < arrayKey.length; i++) {
@@ -282,7 +286,7 @@ for (let i = 0; i < arrayKey.length; i++) {
 
               array[i] = array[i] + 1;
               console.log(array[i])
-              if (array[i] === 3) {
+              if (array[i] === 2) {
                 j++
                 if ((j == arrayKey.length) || (array[i] > 3)) {
                   numberOfCollisions = array[i];
@@ -315,12 +319,45 @@ function isGameOver () {
   return !!balls.find(ball => ball.y < wall.y);
 }
 
+function proceedGame() {
+    for (let i = 0; i < arrayCartridges.length; i++) {
+      $(arrayCartridges[i]).remove();
+    }
+
+    for (let i = 0; i < arrayKey.length; i++) {
+      let number = arrayKey[i]
+      arrayBall[number].remove();
+    }
+
+}
+
+function removeGame() {
+  let newGame = confirm('Ссыграть ещё раз?');
+    if (newGame) {
+      lvl = 1;
+      startGame();
+    }
+
+    for (let i = 0; i < arrayCartridges.length; i++) {
+      $(arrayCartridges[i]).remove();
+    }
+
+    for (let i = 0; i < arrayKey.length; i++) {
+      let number = arrayKey[i]
+      arrayBall[number].remove();
+
+      if (objects[i].id == number) {
+        delete objects[i];
+      }
+    }
+
+}
+
 function doGameStep () {
   let currentGameStepTime = getGameStepTime();
 
     for(let i=0; i < objects.length; i++) {
       objects[i].live();
-      
     }
 
     for(let i=0; i < objects.length; i++) {
@@ -336,12 +373,17 @@ function doGameStep () {
 
     if (!gameOver && (blunder < 3) && (innerLevel == lvl)) {
       setTimeout(doGameStep, GAME_STEP_DELAY);
-    } else if (gameOver){
+    } else if (gameOver) {
+
       alert('Игра закончена, вы пропустили квадрат');
+      removeGame();
     } else if (blunder > 2) {
+
       alert('Игра закончена, вы потратили все свои патроны');
+      removeGame();
     } else if (innerLevel !== lvl) {
-      return points
+
+      return points;
     }
   }
 
